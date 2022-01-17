@@ -18,17 +18,23 @@ fn main() {
 
         match command {
             "cd" => {
-                // default to '/' as new directory if one was not provided
                 let new_dir = args.peekable().peek().map_or("/", |x| *x);
                 let root = Path::new(new_dir);
                 if let Err(e) = env::set_current_dir(&root) {
                     eprintln!("{}", e);
                 }
             }
+            "exit" => return,
             command => {
-                let mut child = Command::new(command).args(args).spawn().unwrap();
+                let child = Command::new(command).args(args).spawn();
 
-                child.wait();
+                // gracefully handle malformed user input
+                match child {
+                    Ok(mut child) => {
+                        child.wait();
+                    }
+                    Err(e) => eprintln!("{}", e),
+                };
             }
         }
     }
